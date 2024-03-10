@@ -49,33 +49,43 @@ def createFolders(destination_folder):
 if __name__ == '__main__':
 
 
-    # Define the augmentation transformations
+
+        # Define the augmentation transformations
     transform = A.Compose([
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
-        A.RandomSaturation(p=0.5),
-        A.RandomBrightness(p=0.5),
+        A.RandomShadow(p=0.5),
+        A.RandomBrightnessContrast(p=0.5),
         A.GaussNoise(p=0.5, var_limit=(0, 2)),
         A.ZoomBlur(p=0.5),
         A.RandomSnow(p=0.5),
         A.RandomSunFlare(p=0.5),
-        A.DefocusBlur(p=0.5),
+        A.Defocus(p=0.5),
         ToTensorV2()
     ])
 
-    # Create the dataset
-    dataset = ImageFolder("/home/edramos/Documents/MLOPS/SmartAssemblyProcessRecognition/CustomDataset", transform=transform)
-
+    dataset_path="/home/edramos/Documents/MLOPS/SmartAssemblyProcessRecognition/CustomDataset"
+        # Create the dataset
+    dataset = ImageFolder(dataset_path, transform=transform)
+    # Duplicate the dataset 5 times
+    expanded_dataset = torch.utils.data.ConcatDataset([dataset] * 5)
     # Calculate the sizes for training, validation, and testing
-    total_samples = len(dataset)
+    total_samples = len(expanded_dataset)
     train_size = int(0.8 * total_samples)
     val_size = int(0.1 * total_samples)
     test_size = total_samples - train_size - val_size
 
+    print("Total Samples:", total_samples)
+    print("Train Size:", train_size)
+    print("Validation Size:", val_size)
+    print("Test Size:", test_size)
+
     # Split the dataset into training, validation, and testing
-    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, val_size, test_size])
+    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(expanded_dataset, [train_size, val_size, test_size])
 
     # Create the data loaders
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
+
+    print("Train Dataloader Size:", len(train_dataloader.dataset))
